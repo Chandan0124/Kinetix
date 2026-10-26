@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kinetix - High-Speed Phone-to-PC Delta Mirror &amp; Recovery</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="app-layout">
+    <!-- Top Header Bar -->
+    <header class="top-bar glass-panel">
+      <div class="top-bar-left">
+        <div class="logo-group">
+          <div class="logo-icon-wrap">
+            <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#F7630C" />
+                  <stop offset="100%" stop-color="#FF7824" />
+                </linearGradient>
+              </defs>
+              <rect x="2" y="4" width="12" height="24" rx="3" stroke="#F7630C" stroke-width="2" />
+              <rect x="18" y="8" width="12" height="16" rx="2" stroke="#FFFFFF" stroke-width="2" />
+              <path d="M11 12L19 12M16 9L19 12L16 15" stroke="#F7630C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 20L13 20M16 17L13 20L16 23" stroke="#A0A0A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="logo-text">
+            <div class="logo-title-row">
+              <h1 class="logo-title">KINETI<span>X</span></h1>
+              <span class="version-tag">v2.4 PRO</span>
+            </div>
+            <p class="logo-subtitle">High-Speed Phone-to-PC Delta Mirror &amp; Recovery</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Device Status Pill -->
+      <div class="top-bar-center">
+        <div id="device-pill" class="device-status-pill disconnected">
+          <div class="device-pill-content" style="display: none;">
+            <div class="status-indicator">
+              <span class="status-dot"></span>
+              <span class="status-ring"></span>
+            </div>
+            <div class="device-info-col">
+              <div class="device-main-row">
+                <span id="device-model-name" class="device-model">Android Phone</span>
+                <span id="device-os-tag" class="os-badge">Android</span>
+                <span id="device-conn-tag" class="conn-badge usb">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  USB
+                </span>
+              </div>
+              <div class="device-sub-row">
+                <div class="battery-meter" title="Phone Battery Level">
+                  <svg class="battery-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="16" height="10" rx="2"/>
+                    <line x1="20" y1="11" x2="20" y2="13"/>
+                  </svg>
+                  <span id="device-battery-pct">--%</span>
+                </div>
+                <div class="storage-meter" title="Device Storage">
+                  <span class="meter-label">Storage:</span>
+                  <div class="meter-bar-track">
+                    <div id="storage-bar-fill" class="meter-bar-fill" style="width: 0%;"></div>
+                  </div>
+                  <span id="storage-readout" class="meter-text">Connect phone to scan</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Disconnected state fallback inside pill -->
+          <div class="device-pill-disconnected" style="display: flex;">
+            <div class="disc-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div class="disc-text">
+              <strong>No phone detected</strong>
+              <span>Plug in USB with USB Debugging enabled</span>
+            </div>
+            <button id="btn-scan-devices" class="btn-sm btn-outline-cyan">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              Scan Now
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Target Path & Quick Actions -->
+      <div class="top-bar-right">
+        <div class="backup-path-selector" title="Current PC Backup Target Directory">
+          <svg class="folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          <div class="path-info">
+            <span class="path-label">PC Target Folder:</span>
+            <span id="current-target-path" class="path-string" title="B:\MobilePCSync\Backups">B:\MobilePCSync\Backups</span>
+          </div>
+          <button id="btn-change-path" class="btn-xs btn-glass" title="Change target backup folder">Change</button>
+        </div>
+
+        <button id="btn-demo-mode" class="btn-xs btn-badge-glow" style="display: none;" title="Toggle Demo Simulator / Live ADB Backend">
+          <span class="demo-led"></span>
+          <span id="demo-mode-label">Demo: OFF</span>
+        </button>
+
+        <button id="btn-quick-settings" class="icon-btn-ghost" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Navigation Bar -->
+    <nav class="main-nav-tabs">
+      <div class="nav-container">
+        <button class="nav-tab active" data-tab="tab-sync">
+          <div class="tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <span>⚡ Sync (Phone ➔ PC)</span>
+          <div class="tab-glow-indicator"></div>
+        </button>
+
+        <button class="nav-tab" data-tab="tab-restore">
+          <div class="tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+          </div>
+          <span>🔄 Restore (PC ➔ Phone)</span>
+          <div class="tab-glow-indicator"></div>
+        </button>
+
+        <button class="nav-tab" data-tab="tab-messages">
+          <div class="tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <span>💬 Messages &amp; Calls Explorer</span>
+          <span class="badge-count" id="nav-sms-badge" style="display: none;">0</span>
+          <div class="tab-glow-indicator"></div>
+        </button>
+
+        <button class="nav-tab" data-tab="tab-settings">
+          <div class="tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <span>⚙️ Settings &amp; Device Info</span>
+          <div class="tab-glow-indicator"></div>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- ========================================== -->
+      <!-- TAB 1: SYNC (PHONE -> PC)                  -->
+      <!-- ========================================== -->
+      <section id="tab-sync" class="tab-pane active">
+        <!-- Top Toolbar & Status -->
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title">Select Phone Storage Categories</h2>
+            <p class="section-desc">Delta-indexing skips unmodified files in milliseconds. Only new and modified blocks are transferred.</p>
+          </div>
+          <div class="category-toggle-tools">
+            <button id="btn-select-all" class="btn-pill-ghost">Select All</button>
+            <button id="btn-deselect-all" class="btn-pill-ghost">Deselect All</button>
+            <span class="selection-summary-badge" id="selected-summary">7 of 7 Selected (Ready to scan)</span>
+          </div>
+        </div>
+
+        <!-- Category Grid (7 Cards) -->
+        <div class="category-grid">
+          <!-- 1. Photos & Videos -->
+          <div class="category-card active" data-category="photos">
+            <label class="custom-checkbox">
+              <input type="checkbox" checked data-cat="photos">
+              <span class="checkmark"></span>
+            </label>
+            <div class="category-header">
+              <div class="cat-icon-box cat-photos">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="btn-xs btn-outline-cyan btn-choose-subfolders" data-cat="pics" title="Choose specific photo albums or subfolders">📂 Select Folders</button>
+                <span class="cat-badge" id="badge-pics">All Albums</span>
+              </div>
+            </div>
+            <div class="category-body">
+              <h3 class="cat-title">Photos &amp; Videos</h3>
+              <p class="cat-paths" id="paths-display-pics"><code>/sdcard/DCIM</code>, <code>/sdcard/Pictures</code>, <code>/sdcard/Movies</code></p>
+              <p class="cat-desc">Camera roll, 4K 60fps recordings, raw images, screenshots &amp; portrait portraits.</p>
+            </div>
+            <div class="category-footer">
+              <span class="cat-stat-files">-- items</span>
+              <span class="cat-stat-size">Ready to scan</span>
+            </div>
+            <div class="card-border-glow"></div>
+          </div>
+
+          <!-- 2. Music & Audio -->
+          <div class="category-card active" data-category="music">
+            <label class="custom-checkbox">
+              <input type="checkbox" checked data-cat="music">
+              <span class="checkmark"></span>
+            </label>
+            <div class="category-header">
+              <div class="cat-icon-box cat-music">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18V5l12-2v13"/>
+                  <circle cx="6" cy="18" r="3"/>
+                  <circle cx="18" cy="16" r="3"/>
+                </svg>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="btn-xs btn-outline-cyan btn-choose-subfolders" data-cat="music" title="Choose specific music directories or albums">📂 Select Folders</button>
+                <span class="cat-badge" id="badge-music">All Music</span>
+              </div>
+            </div>
+            <div class="category-body">
+              <h3 class="cat-title">Music &amp; Audio</h3>
+              <p class="cat-paths" id="paths-display-music"><code>/sdcard/Music</code>, <code>/sdcard/Podcasts</code>, <code>/sdcard/Audiobooks</code></p>
+              <p class="cat-desc">FLAC, MP3, downloaded podcast episodes, and sound recordings.</p>
+            </div>
+            <div class="category-footer">
+              <span class="cat-stat-files">-- items</span>
+              <span class="cat-stat-size">Ready to scan</span>
+            </div>
+            <div class="card-border-glow"></div>
+          </div>
+
+          <!-- 3. WhatsApp Media & Backups -->
+          <div class="category-card active" data-category="whatsapp">
+            <label class="custom-checkbox">
+              <input type="checkbox" checked data-cat="whatsapp">
+              <span class="checkmark"></span>
+            </label>
+            <div class="category-header">
+              <div class="cat-icon-box cat-whatsapp">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                </svg>
+              </div>
+              <span class="cat-badge">WhatsApp + Crypt</span>
+            </div>
+            <div class="category-body">
+              <h3 class="cat-title">WhatsApp Media &amp; Backups</h3>
+              <p class="cat-paths"><code>Android/media/com.whatsapp/WhatsApp/</code></p>
+              <p class="cat-desc">Sent/received videos, voice notes, voice messages, documents &amp; <code>msgstore.db.crypt15</code>.</p>
+            </div>
+            <div class="category-footer">
+              <span class="cat-stat-files">-- items</span>
+              <span class="cat-stat-size">Ready to scan</span>
+            </div>
+            <div class="card-border-glow"></div>
+          </div>
+
+          <!-- 4. Telegram Media & Files -->
+          <div class="category-card active" data-category="telegram">
+            <label class="custom-checkbox">
+              <input type="checkbox" checked data-cat="telegram">
+              <span class="checkmark"></span>
+            </label>
+            <div class="category-header">
+              <div class="cat-icon-box cat-telegram">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </div>
+              <span class="cat-badge">Telegram Media</span>
+            </div>
+            <div class="category-body">
+              <h3 class="cat-title">Telegram Media &amp; Files</h3>
+              <p class="cat-paths"><code>/sdcard/Telegram/</code> &amp; Downloads</p>
+              <p class="cat-desc">Telegram Video, Audio, Images, and received document archives.</p>
+            </div>
+            <div class="category-footer">
+              <span class="cat-stat-files">-- items</span>
+              <span class="cat-stat-size">Ready to scan</span>
+            </div>
+            <div class="card-border-glow"></div>
+          </div>
+
+          <!-- 5. SMS & Call Logs -->
+          <div class="category-card active" data-category="sms_calls">
+            <label class="custom-checkbox">
+              <input type="checkbox" checked data-cat="sms_calls">
+              <span class="checkmark"></span>
+            </label>
+            <div class="category-header">
+              <div class="cat-icon-box cat-sms">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+              </div>
+              <span class="cat-badge">JSON + XML + HTML</span>
+            </div>
+            <div class="category-body">
+              <h3 class="cat-title">SMS &amp; Call Logs</h3>
+              <p class="cat-paths"><code>System Telephony Provider</code></p>
+              <p class="cat-desc">Full message threads, incoming/outgoing calls, durations and MMS payloads.</p>
+            </div>
+            <div class="category-footer">
+              <span class="cat-stat-files">-- items</span>
+              <span class="cat-stat-size">Ready to scan</span>
+            </div>
+            <div class="card-border-glow"></div>
+          </div>
+
+          <!-- 6. Android 15+ Private Space -->
+          <div class="category-card active" data-category="private_space">
+            <label class="custom-checkbox">
+              <input type="checkbox" checked data-cat="private_space">
+              <span class="checkmark"></span>
+            </label>
+            <div class="category-header">
+              <div class="cat-icon-box cat-private">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <span class="cat-badge">User Profile 10+</span>
+            </div>
+            <div class="category-body">
+              <h3 class="cat-title">Android 15+ Private Space</h3>
+              <p class="cat-paths"><code>User 10 / Private Storage Profile</code></p>
+              <p class="cat-desc">Isolated secure vault profile, hidden vault apps, and second user media.</p>
+            </div>
+            <div class="category-footer">
+              <span class="cat-stat-files">-- items</span>
+              <span class="cat-stat-size">Ready to scan</span>
+            </div>
+            <div class="card-border-glow"></div>
+          </div>
+
+          <!-- 7. Custom Folders -->
+          <div class="category-card active" data-category="custom_folders">
+            <label class="custom-checkbox">
+              <input type="checkbox" checked data-cat="custom_folders">
+              <span class="checkmark"></span>
+            </label>
+            <div class="category-header">
+              <div class="cat-icon-box cat-custom">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  <line x1="12" y1="11" x2="12" y2="17"/>
+                  <line x1="9" y1="14" x2="15" y2="14"/>
+                </svg>
+              </div>
+              <button id="btn-add-custom-folder" class="btn-xs btn-outline-cyan">+ Add Path</button>
+            </div>
+            <div class="category-body">
+              <h3 class="cat-title">Custom Folders</h3>
+              <p class="cat-paths" id="custom-paths-display"><code>/sdcard/Documents</code>, <code>/sdcard/Download</code></p>
+              <p class="cat-desc">User-specified phone directories or external SD card mount paths.</p>
+            </div>
+            <div class="category-footer">
+              <span class="cat-stat-files" id="custom-count-display">-- items</span>
+              <span class="cat-stat-size" id="custom-size-display">Ready to scan</span>
+            </div>
+            <div class="card-border-glow"></div>
+          </div>
+        </div>
+
+        <!-- Sync Action Bar -->
+        <div class="action-bar-panel glass-panel">
+          <div class="action-bar-left">
+            <div class="engine-status">
+              <div class="status-pulse-dot"></div>
+              <span>Indexer Engine: <strong>Delta Multi-Threaded v2 (Ready)</strong></span>
+            </div>
+            <div class="engine-meta">
+              <span>Streams: <strong>4 Threads</strong></span>
+              <span class="separator">•</span>
+              <span>Compression: <strong>LZ4 Turbo</strong></span>
+            </div>
+          </div>
+
+          <div class="action-bar-buttons">
+            <button id="btn-scan-diff" class="btn-action btn-scan">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <span>Scan &amp; Preview Diff</span>
+            </button>
+
+            <button id="btn-start-sync" class="btn-action btn-sync">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+              <span>Start Superfast Sync</span>
+            </button>
+
+            <button id="btn-abort-sync" class="btn-action btn-abort" style="display: none;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="12" height="12"/>
+              </svg>
+              <span>Stop Sync</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Telemetry & Speedometer Section -->
+        <div id="telemetry-section" class="telemetry-panel glass-panel" style="display: none;">
+          <div class="telemetry-header">
+            <div class="telemetry-title-group">
+              <div class="pulse-radar"></div>
+              <h3 class="telemetry-title" id="telemetry-status-text">⚡ Multithreaded Mirroring in Progress...</h3>
+            </div>
+            <div class="telemetry-badge-eta">
+              <span>ETA: </span>
+              <strong id="telemetry-eta">00:18s</strong>
+            </div>
+          </div>
+
+          <div class="telemetry-body-grid">
+            <!-- Left: Speedometer Gauge -->
+            <div class="speedometer-box">
+              <div class="speedometer-gauge">
+                <svg class="speed-svg" viewBox="0 0 200 120">
+                  <!-- Background Track Arc -->
+                  <path class="speed-track" d="M 20 105 A 80 80 0 0 1 180 105" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+                  <!-- Glowing Progress Arc -->
+                  <path id="speed-meter-arc" class="speed-arc" d="M 20 105 A 80 80 0 0 1 180 105" fill="none" stroke="url(#speedGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="100"/>
+                  <defs>
+                    <linearGradient id="speedGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#F7630C"/>
+                      <stop offset="100%" stop-color="#FF7824"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- Needle Center Hub -->
+                  <circle cx="100" cy="105" r="8" fill="#262626" stroke="#F7630C" stroke-width="3"/>
+                </svg>
+                <div class="speed-readout">
+                  <span id="current-speed-value" class="speed-number">0.0</span>
+                  <span class="speed-unit">MB/s</span>
+                  <div class="speed-peak">Peak: <strong id="peak-speed-value">0.0 MB/s</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Middle: Progress, Stats & Workers -->
+            <div class="telemetry-stats-box">
+              <div class="progress-info-row">
+                <div class="progress-labels">
+                  <span class="progress-pct" id="progress-pct-label">0%</span>
+                  <span class="progress-bytes" id="progress-bytes-label">Starting transfer...</span>
+                </div>
+                <div class="progress-files" id="progress-files-label">0 files synced</div>
+              </div>
+
+              <!-- Main Progress Bar -->
+              <div class="main-progress-bar">
+                <div id="sync-progress-fill" class="main-progress-fill" style="width: 0%;">
+                  <div class="progress-shimmer"></div>
+                </div>
+              </div>
+
+              <!-- Live Rolling File Ticker -->
+              <div class="ticker-box">
+                <div class="ticker-label">TRANSFERRING:</div>
+                <div class="ticker-content" id="rolling-file-ticker">
+                  <span class="ticker-file">Connecting ADB pipeline...</span>
+                </div>
+              </div>
+
+              <!-- Multithreaded Worker Status Badges -->
+              <div class="worker-threads-grid">
+                <div class="worker-badge" id="worker-1">
+                  <span class="worker-id">W1</span>
+                  <span class="worker-file">IMG_20261024_191.heic</span>
+                  <span class="worker-speed">34 MB/s</span>
+                </div>
+                <div class="worker-badge" id="worker-2">
+                  <span class="worker-id">W2</span>
+                  <span class="worker-file">VID_20261024_002.mp4</span>
+                  <span class="worker-speed">52 MB/s</span>
+                </div>
+                <div class="worker-badge" id="worker-3">
+                  <span class="worker-id">W3</span>
+                  <span class="worker-file">WhatsApp/msgstore.crypt15</span>
+                  <span class="worker-speed">26 MB/s</span>
+                </div>
+                <div class="worker-badge" id="worker-4">
+                  <span class="worker-id">W4</span>
+                  <span class="worker-file">Track_08_HiRes.flac</span>
+                  <span class="worker-speed">12 MB/s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sync Summary Completion Card -->
+          <div id="sync-complete-card" class="sync-summary-banner" style="display: none;">
+            <div class="summary-check-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.5">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+            </div>
+            <div class="summary-text-col">
+              <h4>Sync Complete &amp; Verified!</h4>
+              <p id="sync-summary-message">112 files transferred, 14,230 files skipped (Already up to date). Saved 64.2 GB of bandwidth!</p>
+            </div>
+            <div class="summary-actions">
+              <button id="btn-open-backup-folder" class="btn-sm btn-cyan">Open PC Folder</button>
+              <button id="btn-dismiss-summary" class="btn-sm btn-ghost">Dismiss</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: RESTORE (PC -> PHONE)               -->
+      <!-- ========================================== -->
+      <section id="tab-restore" class="tab-pane">
+        <!-- Format & Restore Wizard Banner -->
+        <div class="restore-wizard-banner glass-panel">
+          <div class="wizard-robot-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="4" y="8" width="16" height="12" rx="3"/>
+              <path d="M9 4v4M15 4v4"/>
+              <circle cx="9" cy="13" r="1.5" fill="currentColor"/>
+              <circle cx="15" cy="13" r="1.5" fill="currentColor"/>
+              <line x1="9" y1="17" x2="15" y2="17"/>
+            </svg>
+          </div>
+          <div class="wizard-text">
+            <h3>Format &amp; Restore Wizard (1-Click Recovery)</h3>
+            <p>Have you formatted or switched your phone? Connect your phone and select what you want to push back. <strong>Kinetix preserves exact directory hierarchies</strong> and automatically triggers Android's <code>MediaScanner</code> so photos, albums, and songs show up instantly in your gallery!</p>
+          </div>
+        </div>
+
+        <div class="restore-layout-grid">
+          <!-- Left: Available Snapshots / Backup Archives on PC -->
+          <div class="restore-snapshots-card glass-panel">
+            <div class="card-inner-header">
+              <h4>1. Select Backup Snapshot on PC</h4>
+              <button id="btn-browse-snapshot" class="btn-xs btn-outline-cyan">Refresh Snapshots</button>
+            </div>
+            <div class="snapshot-list" id="snapshot-list-container">
+              <div class="empty-snapshots-msg" style="padding: 24px; text-align: center; color: var(--text-dim); background: #242424; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.1);">
+                <div style="font-weight: 600; color: #fff; margin-bottom: 4px;">No Local Backups Found Yet</div>
+                <div style="font-size: 12px; color: var(--text-dim);">Backups created with Kinetix will appear here for 1-Click Restore to your phone.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Restore Checklist & Triggers -->
+          <div class="restore-targets-card glass-panel">
+            <div class="card-inner-header">
+              <div>
+                <h4 style="margin: 0;">2. Select Categories to Push Back</h4>
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">Inspect detected albums &amp; subfolders from your PC backup snapshot</div>
+              </div>
+              <div class="category-toggle-tools">
+                <button id="btn-restore-select-all" class="btn-pill-ghost">Select All</button>
+                <button id="btn-restore-deselect-all" class="btn-pill-ghost">Deselect All</button>
+                <span class="selection-summary-badge" id="restore-selected-summary">Ready</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Restore Categories Container -->
+            <div class="restore-categories-list" id="restore-categories-container">
+              <!-- Dynamically populated via /api/snapshot/details -->
+              <div class="restore-loading-msg" style="padding: 24px; text-align: center; color: var(--text-dim);">
+                <span>Loading snapshot folder details...</span>
+              </div>
+            </div>
+
+            <div class="restore-options-box">
+              <label class="toggle-switch-row" style="border: 1px solid rgba(56, 189, 248, 0.25); background: rgba(56, 189, 248, 0.05); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                <input type="checkbox" checked id="res-opt-smart-delta">
+                <span class="toggle-slider"></span>
+                <span class="toggle-label" style="color: #38BDF8; font-weight: 600;">⚡ Smart Delta Restore (Fast-scan phone first, skip files that are already identical)</span>
+              </label>
+              <label class="toggle-switch-row">
+                <input type="checkbox" checked id="res-opt-mediascan">
+                <span class="toggle-slider"></span>
+                <span class="toggle-label">Auto-trigger Android <code>MediaScanner</code> broadcast after push</span>
+              </label>
+              <label class="toggle-switch-row">
+                <input type="checkbox" checked id="res-opt-verify">
+                <span class="toggle-slider"></span>
+                <span class="toggle-label">Verify SHA-256 integrity on phone after push</span>
+              </label>
+            </div>
+
+            <!-- Restore Pre-Flight Delta Analysis Card -->
+            <div id="restore-analysis-card" class="glass-panel" style="display: none; margin-bottom: 14px; border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(18, 26, 38, 0.85); border-radius: 12px; padding: 16px 20px;">
+              <div class="analysis-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.3rem;">📊</span>
+                  <div>
+                    <h3 style="font-size: 15px; font-weight: 600; margin: 0; color: #fff;">Pre-Restore Delta Analysis</h3>
+                    <p style="font-size: 12px; margin: 2px 0 0; color: var(--text-dim);">Live device comparison: Backup Snapshot vs Connected Phone Storage</p>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="badge-status" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8; font-size: 11px; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.3);">⚡ Sub-Second Live Scan</span>
+                  <button id="btn-close-restore-analysis" class="btn-xs" style="background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 2px 6px;">✕</button>
+                </div>
+              </div>
+
+              <div class="diff-summary-cards" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px;">
+                <div class="diff-stat-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: center;">
+                  <span class="diff-stat-num" id="res-stat-total-files" style="display: block; font-size: 22px; font-weight: 700; color: #fff;">0</span>
+                  <span class="diff-stat-label" style="display: block; font-size: 12px; color: var(--text-dim);">Total in Backup</span>
+                  <small id="res-stat-total-size" style="color: var(--text-dim); font-size: 11px;">0 MB</small>
+                </div>
+                <div class="diff-stat-card text-emerald" style="background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: 8px; padding: 12px; text-align: center;">
+                  <span class="diff-stat-num" id="res-stat-skipped-files" style="display: block; font-size: 22px; font-weight: 700; color: #34D399;">0</span>
+                  <span class="diff-stat-label" style="display: block; font-size: 12px; color: #34D399;">Already on Phone</span>
+                  <small id="res-stat-skipped-size" style="color: #34D399; font-size: 11px;">Skipped (0 MB)</small>
+                </div>
+                <div class="diff-stat-card text-cyan" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 12px; text-align: center;">
+                  <span class="diff-stat-num" id="res-stat-to-push-files" style="display: block; font-size: 22px; font-weight: 700; color: #38BDF8;">0</span>
+                  <span class="diff-stat-label" style="display: block; font-size: 12px; color: #38BDF8;">To Restore (Delta)</span>
+                  <small id="res-stat-to-push-size" style="color: #38BDF8; font-size: 11px;">0 MB</small>
+                </div>
+                <div class="diff-stat-card text-orange" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 12px; text-align: center;">
+                  <span class="diff-stat-num" id="res-stat-time-saved" style="display: block; font-size: 22px; font-weight: 700; color: #F59E0B;">--</span>
+                  <span class="diff-stat-label" style="display: block; font-size: 12px; color: #F59E0B;">Estimated Time Saved</span>
+                  <small id="res-stat-time-saved-sub" style="color: #F59E0B; font-size: 11px;">Zero-Copy Bypass</small>
+                </div>
+              </div>
+
+              <div id="restore-analysis-detail-msg" style="padding: 12px 16px; border-radius: 8px; font-size: 13px; line-height: 1.5; background: rgba(56, 189, 248, 0.06); border-left: 3px solid #38BDF8; color: #E2E8F0;">
+                <!-- e.g. "⚡ All 290 files in SpotFlac are already identical on your phone. Nothing needs to be transferred!" -->
+              </div>
+            </div>
+
+            <!-- Restore Action Buttons -->
+            <div class="restore-action-box" style="display: flex; gap: 12px;">
+              <button id="btn-analyze-restore" class="btn-action btn-scan" style="flex: 1; padding: 14px 20px; border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1); color: #38BDF8; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <span>🔍 Scan &amp; Compare Phone</span>
+              </button>
+
+              <button id="btn-start-restore" class="btn-restore-lg" style="flex: 1.6; margin: 0;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/>
+                </svg>
+                <span id="btn-start-restore-text">🔄 1-Click Restore to Phone</span>
+              </button>
+            </div>
+
+            <!-- Live Restore Telemetry & Speedometer Section -->
+            <div id="restore-telemetry-section" class="telemetry-panel glass-panel" style="display: none; margin-top: 14px;">
+              <div class="telemetry-header">
+                <div class="telemetry-title-group">
+                  <div class="pulse-radar"></div>
+                  <h3 class="telemetry-title" id="restore-telemetry-status-text">⚡ Restoring PC Files to Phone (ADB Push Stream)...</h3>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="telemetry-badge-eta">
+                    <span>ETA: </span>
+                    <strong id="restore-telemetry-eta">--:--s</strong>
+                  </div>
+                  <button id="btn-abort-restore" class="btn-xs btn-outline-danger" style="display: inline-flex;" title="Stop restore">
+                    ✕ Stop
+                  </button>
+                </div>
+              </div>
+
+              <div class="telemetry-body-grid">
+                <!-- Left: Speedometer Gauge -->
+                <div class="speedometer-box">
+                  <div class="speedometer-gauge">
+                    <svg class="speed-svg" viewBox="0 0 200 120">
+                      <!-- Background Track Arc -->
+                      <path class="speed-track" d="M 20 105 A 80 80 0 0 1 180 105" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+                      <!-- Glowing Cyan Progress Arc -->
+                      <path id="restore-speed-meter-arc" class="speed-arc" d="M 20 105 A 80 80 0 0 1 180 105" fill="none" stroke="url(#speedGradCyan)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+                      <defs>
+                        <linearGradient id="speedGradCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stop-color="#38BDF8"/>
+                          <stop offset="100%" stop-color="#0EA5E9"/>
+                        </linearGradient>
+                      </defs>
+                      <circle cx="100" cy="105" r="8" fill="#262626" stroke="#38BDF8" stroke-width="3"/>
+                    </svg>
+                    <div class="speed-readout">
+                      <span id="restore-current-speed-value" class="speed-number">0.0</span>
+                      <span class="speed-unit">MB/s</span>
+                      <div class="speed-peak">Peak: <strong id="restore-peak-speed-value">0.0 MB/s</strong></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Middle: Progress, Stats & Workers -->
+                <div class="telemetry-stats-box">
+                  <div class="progress-info-row">
+                    <div class="progress-labels">
+                      <span class="progress-pct" id="restore-progress-pct-label">0%</span>
+                      <span class="progress-bytes" id="restore-progress-bytes-label">Starting push pipeline...</span>
+                    </div>
+                    <div class="progress-files" id="restore-progress-files-label">0 / 0 files restored</div>
+                  </div>
+
+                  <!-- Main Progress Bar -->
+                  <div class="main-progress-bar">
+                    <div id="restore-progress-fill" class="main-progress-fill cyan-glow" style="width: 0%;">
+                      <div class="progress-shimmer"></div>
+                    </div>
+                  </div>
+
+                  <!-- Live Rolling File Ticker -->
+                  <div class="ticker-box">
+                    <div class="ticker-label">RESTORING:</div>
+                    <div class="ticker-content" id="restore-rolling-file-ticker">
+                      <span class="ticker-file">Connecting ADB restore pipeline...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Restore Completion Card -->
+              <div id="restore-complete-card" class="sync-summary-banner" style="display: none; margin-top: 12px;">
+                <div class="summary-check-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.5">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                </div>
+                <div class="summary-text-col">
+                  <h4>Restore Complete &amp; Gallery Refreshed!</h4>
+                  <p id="restore-summary-message">Files successfully pushed to phone. Android MediaScanner refreshed.</p>
+                </div>
+                <div class="summary-actions">
+                  <button id="btn-rescan-gallery" class="btn-sm btn-cyan">Scan Gallery Again</button>
+                  <button id="btn-dismiss-restore-summary" class="btn-sm btn-ghost">Dismiss</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 3: MESSAGES & CALLS EXPLORER           -->
+      <!-- ========================================== -->
+      <section id="tab-messages" class="tab-pane">
+        <div class="messages-top-toolbar glass-panel">
+          <div class="msg-nav-pills">
+            <button class="msg-view-btn active" data-view="messages">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>SMS &amp; MMS (<strong id="total-sms-threads">28</strong>)</span>
+            </button>
+            <button class="msg-view-btn" data-view="calls">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>Call History (<strong id="total-call-records">142</strong>)</span>
+            </button>
+          </div>
+
+          <div class="msg-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="sms-search-input" placeholder="Search across all messages, contacts or phone numbers...">
+          </div>
+
+          <div class="msg-export-actions">
+            <button id="btn-export-html" class="btn-xs btn-outline-cyan" title="Open beautiful self-contained HTML archive viewer">
+              📄 Standalone HTML
+            </button>
+            <button id="btn-export-xml" class="btn-xs btn-outline-purple" title="Export XML compatible with SMS Backup & Restore">
+              📥 Export XML
+            </button>
+            <button id="btn-export-json" class="btn-xs btn-glass" title="Export JSON dataset">
+              💾 JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- Two-Pane Messages Layout -->
+        <div id="messages-view-container" class="msg-two-pane-layout">
+          <!-- Left Pane: Conversation Threads -->
+          <div class="threads-pane glass-panel">
+            <div class="threads-header">
+              <span>Conversations</span>
+              <span class="badge-mini" id="threads-count-badge">28 threads</span>
+            </div>
+            <div class="threads-list" id="threads-list">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </div>
+
+          <!-- Right Pane: Active Thread Chat View -->
+          <div class="chat-pane glass-panel">
+            <div class="chat-header" id="chat-header">
+              <div class="chat-header-user">
+                <div class="avatar-circle" id="chat-avatar">EM</div>
+                <div class="user-info">
+                  <h4 id="chat-contact-name">Elena Miller</h4>
+                  <span id="chat-contact-number">+1 (555) 392-8812</span>
+                </div>
+              </div>
+              <div class="chat-header-actions">
+                <span class="thread-stat-tag" id="chat-msg-count">48 messages</span>
+                <button id="btn-export-thread" class="btn-xs btn-glass">Export Thread</button>
+              </div>
+            </div>
+
+            <div class="chat-messages-container" id="chat-messages-container">
+              <!-- Dynamically populated chat bubbles -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Alternative Calls Pane (Hidden by default) -->
+        <div id="calls-view-container" class="calls-pane-layout glass-panel" style="display: none;">
+          <div class="calls-table-container">
+            <table class="calls-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Contact / Phone Number</th>
+                  <th>Date &amp; Time</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="calls-tbody">
+                <!-- Dynamically populated call rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 4: SETTINGS & DEVICE INFO              -->
+      <!-- ========================================== -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="settings-grid">
+          <!-- Settings Card 1: Connection & Transport -->
+          <div class="settings-card glass-panel">
+            <div class="settings-card-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+              <h3>ADB Connection &amp; Mode</h3>
+            </div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>Connection Mode</strong>
+                  <span>Choose USB Cable for raw wire speed or Wireless ADB</span>
+                </div>
+                <div class="segmented-control">
+                  <button class="seg-btn active" id="btn-mode-usb">USB 3.2</button>
+                  <button class="seg-btn" id="btn-mode-wifi">Wireless 5GHz</button>
+                </div>
+              </div>
+
+              <div id="wifi-config-row" class="wifi-input-row" style="display: none;">
+                <input type="text" id="wifi-ip" placeholder="192.168.1.150:5555" class="input-dark">
+                <button id="btn-connect-wifi" class="btn-sm btn-cyan">Connect ADB</button>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>ADB Binary Executable</strong>
+                  <span>Bundled platform-tools adb.exe automatically linked</span>
+                </div>
+                <div class="setting-input-col">
+                  <input type="text" readonly value="B:\tEMP\MobilePCSync\bin\platform-tools\adb.exe" class="input-dark input-path">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>Stay Awake During Sync</strong>
+                  <span>Prevents phone screen timeout &amp; background throttle</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked id="set-stay-awake">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings Card 2: Performance & Multithreading -->
+          <div class="settings-card glass-panel">
+            <div class="settings-card-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <h3>Performance &amp; Compression</h3>
+            </div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>Concurrent Worker Threads</strong>
+                  <span>Parallel sync workers for batch small files and large streams</span>
+                </div>
+                <div class="slider-group">
+                  <input type="range" id="workers-slider" min="1" max="8" value="4" class="slider-dark">
+                  <span id="workers-value-badge" class="slider-val-badge">4 Threads</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>Stream Compression Algorithm</strong>
+                  <span>LZ4 delivers highest throughput over USB 3.0+ links</span>
+                </div>
+                <select id="select-compression" class="select-dark">
+                  <option value="lz4" selected>LZ4 Turbo (Ultra-fast, lowest CPU)</option>
+                  <option value="zstd">Zstandard (High compression ratio)</option>
+                  <option value="auto">Auto (Smart per-file format detection)</option>
+                  <option value="none">None (Raw bypass for JPEG/MP4)</option>
+                </select>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>ADB Buffer Chunk Size</strong>
+                  <span>Buffer memory allocated per worker stream</span>
+                </div>
+                <select id="select-buffer-size" class="select-dark">
+                  <option value="256kb">256 KB</option>
+                  <option value="1mb" selected>1 MB (Optimal)</option>
+                  <option value="4mb">4 MB (High RAM)</option>
+                  <option value="8mb">8 MB</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings Card 3: Android Device Utilities -->
+          <div class="settings-card glass-panel">
+            <div class="settings-card-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              <h3>Android Device Utilities</h3>
+            </div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>Trigger Android MediaScanner</strong>
+                  <span>Forces Android's MediaStore to re-index restored photos &amp; songs</span>
+                </div>
+                <button id="btn-manual-mediascan" class="btn-sm btn-outline-cyan">
+                  ⚡ Trigger Scan Now
+                </button>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>Restart ADB Daemon</strong>
+                  <span>Kills and starts ADB server if device becomes unresponsive</span>
+                </div>
+                <button id="btn-restart-adb" class="btn-sm btn-ghost">
+                  Restart Server
+                </button>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-label-col">
+                  <strong>ADB TCP/IP Port Forward</strong>
+                  <span>Enable port 5555 for untethered wireless sync</span>
+                </div>
+                <button id="btn-enable-tcpmode" class="btn-sm btn-outline-purple">
+                  Enable TCP/IP 5555
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings Card 4: Device & Environment Specs -->
+          <div class="settings-card glass-panel">
+            <div class="settings-card-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <h3>System &amp; Hardware Specs</h3>
+            </div>
+            <div class="settings-card-body specs-card">
+              <div class="specs-grid">
+                <div class="spec-item">
+                  <span class="spec-label">Phone Model:</span>
+                  <span class="spec-val" id="spec-phone-model">Connect phone via USB</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">Android OS:</span>
+                  <span class="spec-val" id="spec-os-ver">--</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">ADB Server:</span>
+                  <span class="spec-val">1.0.41 (Google platform-tools)</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">Host OS:</span>
+                  <span class="spec-val">Windows 11 x64 (PowerShell 7)</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">Sync Protocol:</span>
+                  <span class="spec-val">Kinetix Delta-V2 Streaming</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">USB Port Speed:</span>
+                  <span class="spec-val text-cyan">SuperSpeed+ USB 3.2 (5000 Mbps)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: DIFF PREVIEW MODAL                  -->
+  <!-- ========================================== -->
+  <div id="diff-preview-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-window glass-panel-modal">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Sub-Second Delta Scan Results</h3>
+            <p class="modal-subtitle">Fast index comparison between Phone storage and PC backup directory</p>
+          </div>
+        </div>
+        <button id="btn-close-diff-modal" class="modal-close-btn">&times;</button>
+      </div>
+
+      <!-- Diff Stats Bar -->
+      <div class="diff-summary-cards">
+        <div class="diff-stat-card">
+          <span class="diff-stat-num" id="modal-stat-scanned">0</span>
+          <span class="diff-stat-label">Total Files Scanned</span>
+        </div>
+        <div class="diff-stat-card text-emerald">
+          <span class="diff-stat-num" id="modal-stat-skipped">0</span>
+          <span class="diff-stat-label">Already Synced (Skipped)</span>
+          <span class="diff-stat-sub" id="modal-stat-skipped-sub">0 B Saved</span>
+        </div>
+        <div class="diff-stat-card text-cyan">
+          <span class="diff-stat-num" id="modal-stat-new">0</span>
+          <span class="diff-stat-label">New to Transfer</span>
+          <span class="diff-stat-sub" id="modal-stat-new-sub">0 B</span>
+        </div>
+        <div class="diff-stat-card text-amber">
+          <span class="diff-stat-num" id="modal-stat-modified">0</span>
+          <span class="diff-stat-label">Modified Blocks</span>
+          <span class="diff-stat-sub" id="modal-stat-modified-sub">0 B</span>
+        </div>
+        <div class="diff-stat-card text-purple">
+          <span class="diff-stat-num" id="modal-stat-eta">~0s</span>
+          <span class="diff-stat-label">Est. Transfer Time</span>
+          <span class="diff-stat-sub">@ Wire Speed</span>
+        </div>
+      </div>
+
+      <!-- Diff Tabs and Search -->
+      <div class="diff-list-toolbar">
+        <div class="diff-filter-tabs">
+          <button class="diff-tab-btn active" data-diff-filter="to_sync">To Transfer (<span id="diff-filter-sync-count">0</span>)</button>
+          <button class="diff-tab-btn" data-diff-filter="new_only">New Only (<span id="diff-filter-new-count">0</span>)</button>
+          <button class="diff-tab-btn" data-diff-filter="modified_only">Modified (<span id="diff-filter-mod-count">0</span>)</button>
+          <button class="diff-tab-btn" data-diff-filter="skipped">Up-to-Date / Skipped (<span id="diff-filter-skipped-count">0</span>)</button>
+        </div>
+        <div class="diff-search">
+          <input type="text" id="diff-search-input" placeholder="Filter files..." class="input-dark">
+        </div>
+      </div>
+
+      <!-- Diff File List Table -->
+      <div class="diff-table-scroll">
+        <table class="diff-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Phone Path</th>
+              <th>Size</th>
+              <th>Phone Timestamp</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="diff-table-body">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <div class="modal-footer-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span id="diff-modal-footer-text">Calculating delta differences...</span>
+        </div>
+        <div class="modal-footer-actions">
+          <button id="btn-cancel-diff" class="btn-sm btn-ghost">Cancel</button>
+          <button id="btn-proceed-sync" class="btn-sm btn-sync-glow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span id="diff-modal-proceed-text">Proceed with Sync</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CHANGE BACKUP PATH MODAL            -->
+  <!-- ========================================== -->
+  <div id="path-picker-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-window glass-panel-modal modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Select PC Target Backup Folder</h3>
+        <button id="btn-close-path-modal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body-pad">
+        <p class="modal-desc">Kinetix will mirror phone folders directly into this directory, preserving full directory hierarchy.</p>
+        <div class="form-group">
+          <label>Target PC Folder Path:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="input-new-target-path" value="B:\MobilePCSync\Backups" class="input-dark" style="flex: 1;">
+            <button id="btn-browse-folder-native" class="btn-sm btn-outline-cyan" title="Browse PC Folders">📁 Browse...</button>
+          </div>
+        </div>
+        <div class="suggested-paths">
+          <span class="sub-label">Quick Suggestions:</span>
+          <button class="path-chip" data-path="B:\MobilePCSync\Backups">B:\MobilePCSync\Backups</button>
+          <button class="path-chip" data-path="D:\Android_Mirror">D:\Android_Mirror</button>
+          <button class="path-chip" data-path="C:\Users\User\Backups\Kinetix">C:\Users\User\Backups\Kinetix</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-path" class="btn-sm btn-ghost">Cancel</button>
+        <button id="btn-save-path" class="btn-sm btn-cyan">Save Path</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: SELECT SUBFOLDERS MODAL             -->
+  <!-- ========================================== -->
+  <div id="subfolder-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-window glass-panel-modal" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title" id="subfolder-modal-title">Select Folders to Sync</h3>
+            <p class="modal-subtitle" id="subfolder-modal-subtitle">Choose which specific albums or directories to sync to PC</p>
+          </div>
+        </div>
+        <button id="btn-close-subfolder-modal" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body-pad">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 13px; color: var(--text-dim);">Discovered Folders on Device:</span>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-subfolder-select-all" class="btn-xs btn-ghost">Select All</button>
+            <button id="btn-subfolder-clear-all" class="btn-xs btn-ghost">Clear All</button>
+          </div>
+        </div>
+
+        <div id="subfolder-list-container" style="max-height: 240px; overflow-y: auto; background: #1e1e1e; border-radius: 6px; padding: 12px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 8px;">
+          <!-- Populated dynamically via /api/folders -->
+        </div>
+
+        <div style="margin-top: 14px;">
+          <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px;">+ Add Custom Subfolder Path:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="input-add-subfolder" placeholder="e.g. /sdcard/DCIM/Camera" class="input-dark" style="flex: 1; font-size: 13px;">
+            <button id="btn-add-subfolder-item" class="btn-sm btn-outline-cyan">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button id="btn-sync-only-this-subfolder" class="btn-sm btn-outline-cyan" title="Uncheck all other categories and only sync this category">⚡ Sync ONLY This Category</button>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-cancel-subfolder-modal" class="btn-sm btn-ghost">Cancel</button>
+          <button id="btn-save-subfolder-modal" class="btn-sm btn-cyan">Apply Selection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: SELECT RESTORE SUBFOLDERS MODAL     -->
+  <!-- ========================================== -->
+  <div id="restore-subfolder-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-window glass-panel-modal" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title" id="restore-subfolder-modal-title">Select Folders to Restore</h3>
+            <p class="modal-subtitle" id="restore-subfolder-modal-subtitle">Choose which specific albums or directories to restore back to phone</p>
+          </div>
+        </div>
+        <button id="btn-close-restore-subfolder-modal" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body-pad">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 13px; color: var(--text-dim);">Discovered Folders in Backup:</span>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-restore-subfolder-select-all" class="btn-xs btn-ghost">Select All</button>
+            <button id="btn-restore-subfolder-clear-all" class="btn-xs btn-ghost">Clear All</button>
+          </div>
+        </div>
+
+        <div id="restore-subfolder-list-container" style="max-height: 260px; overflow-y: auto; background: #1e1e1e; border-radius: 6px; padding: 12px; border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 8px;">
+          <!-- Populated dynamically via /api/snapshot/details -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button id="btn-restore-only-this-subfolder" class="btn-sm btn-outline-cyan" title="Uncheck all other categories and only restore this category">⚡ Restore ONLY This Category</button>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-cancel-restore-subfolder-modal" class="btn-sm btn-ghost">Cancel</button>
+          <button id="btn-save-restore-subfolder-modal" class="btn-sm btn-cyan">Apply Selection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ADD CUSTOM FOLDER MODAL             -->
+  <!-- ========================================== -->
+  <div id="custom-folder-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-window glass-panel-modal modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Custom Phone Folder</h3>
+        <button id="btn-close-custom-modal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body-pad">
+        <p class="modal-desc">Enter any folder path on your Android device (internal storage or external SD).</p>
+        <div class="form-group">
+          <label>Phone Directory Path:</label>
+          <input type="text" id="input-custom-folder-path" value="/sdcard/Documents" class="input-dark">
+        </div>
+        <div class="suggested-paths">
+          <span class="sub-label">Popular Directories:</span>
+          <button class="path-chip custom-dir-chip" data-dir="/sdcard/Documents">/sdcard/Documents</button>
+          <button class="path-chip custom-dir-chip" data-dir="/sdcard/Download">/sdcard/Download</button>
+          <button class="path-chip custom-dir-chip" data-dir="/sdcard/Recordings">/sdcard/Recordings</button>
+          <button class="path-chip custom-dir-chip" data-dir="/sdcard/Android/obb">/sdcard/Android/obb</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-custom" class="btn-sm btn-ghost">Cancel</button>
+        <button id="btn-save-custom" class="btn-sm btn-cyan">Add Folder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
